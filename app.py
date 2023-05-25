@@ -1,182 +1,129 @@
+
 import pandas as pd
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
+import math
+import sklearn as sklearn
+import matplotlib as plt
+from sklearn import tree
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import ConfusionMatrixDisplay
+from sklearn.metrics import confusion_matrix
+
+# Use to troubleshoot
+print(sklearn.__version__)
 
 # Menu
 
 
 # Read CSV file
-testingData = pd.read_csv('Training data.csv')
+full_dataset = pd.read_csv('Training data.csv')
 
-# Print the first 5 rows of the dataframe.
-print(testingData.head())
+# Print the first 5 rows of the full dataframe
+print(full_dataset.head())
 
 #print type of dataframe
-print(type(testingData))
+print(type(full_dataset))
 
 #print length of dataframe
-print(len(testingData))
-
-#print Column Qualified
-print(testingData['QUALIFIED'])
+print(len(full_dataset))
 
 # Print Data types in a table
-data_types = testingData.dtypes.reset_index()
+data_types = full_dataset.dtypes.reset_index()
 data_types.columns = ['Column', 'Data Type']
 print(data_types.to_string(index=False))
 
 # output basic statistics using the describe() method from pandas
-print(testingData.describe())
-basic_stats = testingData.describe().reset_index()
+print(full_dataset.describe())
+basic_stats = full_dataset.describe().reset_index()
 #round basic stats to 2 decimal places
 basic_stats = basic_stats.round(2)
 #output to csv
 basic_stats.to_csv('basic_stats.csv', index=False)
 
 # output value counts of Column QUALIFIED using Pandas
-print(testingData['QUALIFIED'].value_counts())
+print(full_dataset['QUALIFIED'].value_counts())
 
-#check for Missing values. If yes, display a percentage of missing values
-total_length = len(testingData['QUALIFIED'])
-missing_values = testingData['QUALIFIED'].isnull().sum()
-percentage_missing = (missing_values / total_length) * 100
-print(percentage_missing)
-if percentage_missing > 20: #if more than 20% of the data is missing, drop the rows of missing values
-    rows_without_missing_data = testingData.dropna()
-    rows_without_missing_data.shape
-    print('More thanb 20% missing, removing affected rows')
-elif 1 <= percentage_missing <= 20: #if less than 20%, replace missing with mean
-    testingData['QUALIFIED'].fillna(testingData['QUALIFIED'].mean(), inplace=True)
-    print('Less than 20% missing values, replacing with mean')
-elif percentage_missing == 0:
-    print('No missing values')
+#convert any categorical data to numerical data (from Workshop 7)
+def convertCategoricaltoNumerical(input_target):
+    targets = full_dataset[input_target].unique()
+    target2code = dict(zip(targets, range(len(targets))))
+    return full_dataset[input_target].replace(target2code)
 
-min_value = testingData['QUALIFIED'].min()
-max_value = testingData['QUALIFIED'].max()
+#clean data (missing values, outliers, etc.)
+#drop rows with missing values
+full_dataset = full_dataset.dropna()
+#convert categorical data to numerical data
+categoriesToConvert = ['HEAT_D','AC', 'STRUCT_D', 'GRADE_D', 'CNDTN_D', 'EXTWALL_D', 'ROOF_D', 'INTWALL_D']
+for category in categoriesToConvert:
+    full_dataset[category] = convertCategoricaltoNumerical(category)
+print(full_dataset.head())
 
-invalid_entries = testingData[(testingData['QUALIFIED'] < min_value) | (
-    testingData['QUALIFIED'] > max_value)]
+# drop the target from the training set
+features_to_drop = ['QUALIFIED', 'row ID', 'CNDTN_D', 'AC', 'STYLE_D', 'SALEDATE',
+                    'EXTWALL_D','ROOF_D','INTWALL_D','GIS_LAST_MOD_DTTM']
+X = full_dataset.drop(columns=features_to_drop, axis=1)
+y = full_dataset['QUALIFIED']
 
-if not invalid_entries.empty:
-    print("Invalid entries found in the QUALIFIED column:")
-    print(invalid_entries)
-else:
-    unique_data_types = testingData['QUALIFIED'].apply(type).unique()
-    if len(unique_data_types) == 1:
-        print("All entries in the QUALIFIED column have the same data type:",
-              unique_data_types[0])
-    else:
-        print("Entries in the QUALIFIED column have different data types.")
+# These are for testing purposes only
+#print(X.head())
+# output a csv of X
+#X.to_csv('X.csv', index=False)
+#print(y.head())
 
-min_value = testingData['QUALIFIED'].min()
-max_value = testingData['QUALIFIED'].max()
+#split the dataset into training and testing datasets (from workshop 7)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=1234)
 
-# test for invalid entries in QUALIFIED column
-invalid_entries = testingData[(testingData['QUALIFIED'] < min_value) | (
-    testingData['QUALIFIED'] > max_value)]
+# create a decision tree classifier (Workshop 7 material)
+clf = tree.DecisionTreeClassifier(max_depth=5, max_leaf_nodes=3)
+clf.fit(X, y)
+tree.plot_tree(clf)
 
-if not invalid_entries.empty:
-    print("Invalid entries found in the QUALIFIED column:")
-    print(invalid_entries)
+# do DT with the training set
+clf = tree.DecisionTreeClassifier(max_depth=5)
+clf.fit(X_train, y_train)
+y_pred = clf.predict(X_test)
 
-    # Remove invalid entries from DataFrame
-    testingData = testingData.drop(invalid_entries.index)
+# Making Prediction
+clf.score(X_test, y_test)
 
-#test that all data types are the same
-unique_data_types = testingData['QUALIFIED'].apply(type).unique()
-if len(unique_data_types) == 1:
-    print("All entries in the QUALIFIED column have the same data type:",
-          unique_data_types[0])
-else:
-    print("Entries in the QUALIFIED column have different data types:")
-    for data_type in unique_data_types:
-        rows = testingData.loc[testingData['QUALIFIED'].apply(
-            type) == data_type]
-        print(f"Data type {data_type}:")
-        print(rows)
+# Confusion matrix as per Workshop 7
+mat = confusion_matrix(y_test, y_pred)
+print(mat)
 
-#test for outliers
-def detect_outliers(df, column_name):
-    # Calculate the first quartile (Q1) and third quartile (Q3)
-    Q1 = df[column_name].quantile(0.25)
-    Q3 = df[column_name].quantile(0.75)
+# output the prediction results to a csv with the original data
+X_test['QUALIFIED'] = y_test
+X_test['PREDICTION'] = y_pred
+X_test.to_csv('prediction_results.csv', index=False)
 
-    # Calculate the IQR (Interquartile Range)
-    IQR = Q3 - Q1
-
-    # Calculate the lower and upper bounds for outliers
-    lower_bound = Q1 - 1.5 * IQR
-    upper_bound = Q3 + 1.5 * IQR
-
-    # Find the outliers
-    outliers = df.loc[(df[column_name] < lower_bound) | (
-        df[column_name] > upper_bound), column_name]
-
-    if not outliers.empty:
-        print("Outliers found in the {} column:".format(column_name))
-        print(outliers)
-    else:
-        print("No outliers found in the {} column.".format(column_name))
+# calculate the accuracy of the model by comparing the predicted values with the actual values
+accuracy = sklearn.metrics.accuracy_score(y_test, y_pred)
+print(f'The accuracy of the model for the test set is {math.floor(accuracy * 100)}%')
 
 
-# Use function
-detect_outliers(testingData, 'QUALIFIED')
+# output the confusion matrix as a heatmap
+#disp = ConfusionMatrixDisplay(confusion_matrix=mat)
+#disp.plot()
+#plt.pyplot.show()
 
-# Check for Normalisation
-def check_normalization(dataFrame, data_column):
-    column = dataFrame[data_column]
-    min_val = column.min()
-    max_val = column.max()
-    range_val = max_val - min_val
-    std_val = column.std()
+# run an unknow set through the model
+# Read the unknown dataset
+unknown_data = pd.read_csv('Unknown data.csv')
 
-    return range_val > 1 or std_val > 1
+# Preprocess the unknown dataset same as before
+# convert categorical data to numerical data again
+for category in categoriesToConvert:
+    unknown_data[category] = convertCategoricaltoNumerical(category)
+print(unknown_data.head())
+# Drop the same columns as the training dataset (except for qualified, which dosnt exist in the unknown dataset. This is why there is a [1:] in the features_to_drop list)])
+unknown_data = unknown_data.drop(columns=features_to_drop[1:], axis=1)
+#drop missing values
+unknown_data = unknown_data.dropna()
 
-# if check normalisation is true, Normalise the data
-if check_normalization(testingData, 'QUALIFIED'):
-    print('QUALIFIED is not normalized')
-    # Normalize the data
-    testingData['QUALIFIED'] = (testingData['QUALIFIED'] - testingData['QUALIFIED'].min()) / (testingData['QUALIFIED'].max() - testingData['QUALIFIED'].min())
-    print(testingData['QUALIFIED'])
-    print('Data is now Normalised')
-else:
-    print('QUALIFIED is normalised')
-    
+# Make predictions on the unknown dataset
+unknown_predictions = clf.predict(unknown_data)
 
-def perform_clustering(df, column_name, num_clusters):
-    column = df[column_name].values.reshape(-1, 1)
-    scaler = StandardScaler()
-    column_scaled = scaler.fit_transform(column)
+# Add the predicted values to the unknown dataset as a new column
+unknown_data['QUALIFIED'] = unknown_predictions
 
-    kmeans = KMeans(n_clusters=num_clusters)
-    kmeans.fit(column_scaled)
-    labels = kmeans.labels_
-
-    return labels
-
-
-# Example usage
-
-cluster_labels = perform_clustering(testingData, 'QUALIFIED', 2)
-print(cluster_labels)
-print(len(cluster_labels))
-
-
-testingData['cluster_label'] = cluster_labels
-testingData.to_csv('clustered_data.csv', index=False)
-
-#test the data against the training set
-
-
-def testData(testing_data, column1, column2):
-    counter = 0
-
-    for val1, val2 in zip(testing_data[column1], testing_data[column2]):
-        if val1 == val2:
-            counter += 1
-
-    matching_percentage = (counter / len(testing_data[column1])) * 100
-
-    return matching_percentage
-
-
+# Save the unknown dataset with predictions to a CSV file
+unknown_data.to_csv('unknown_dataset_with_predictions.csv', index=False)
