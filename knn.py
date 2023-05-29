@@ -25,7 +25,10 @@ def knn():
 
     # clean
     #drop rows with missing values
-    full_dataset = full_dataset.dropna()
+    #full_dataset = full_dataset.dropna()
+
+    #replace any missing values with the mean of the column
+    full_dataset = full_dataset.fillna(full_dataset.mean())
 
     # drop the target from the training set
     features_to_drop = ['QUALIFIED', 'row ID', 'CNDTN_D', 'AC', 'STYLE_D', 'SALEDATE',
@@ -74,7 +77,7 @@ def knn():
     unknown_predictions = clf.predict(unknown_data_input)
 
     # Add the predicted values to the unknown dataset as a new column
-    unknown_data['Predict Qualified'] = unknown_predictions
+    unknown_data['Predict-Qualified'] = unknown_predictions
 
     # Save the unknown dataset with predictions to a CSV file
     unknown_data.drop(columns=[
