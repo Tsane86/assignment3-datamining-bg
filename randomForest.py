@@ -16,7 +16,7 @@ def randomForest():
     np.random.seed(422)
 
     # Read CSV file
-    full_dataset = pd.read_csv('Training data.csv')
+    full_dataset = pd.read_csv('Training Dataset\\Training Data.csv')
 
     # Print the first 5 rows of the full dataframe
     print(full_dataset.head())
@@ -79,6 +79,7 @@ def randomForest():
     # Construct a random forest classifier.
     clf = RandomForestClassifier(n_estimators=50, oob_score=True)
     clf.fit(X_train, y_train)
+    y_pred = clf.predict(X_test)
 
     # We can print the classifier like this.
     print(clf)
@@ -96,7 +97,8 @@ def randomForest():
     # output the prediction results to a csv with the original data
     X_test['QUALIFIED'] = y_test
     X_test['PREDICTION'] = y_pred
-    X_test.to_csv('prediction_results_RF.csv', index=False)
+    X_test.to_csv(
+        'Training Predictions\\prediction_results_RF.csv', index=False)
 
     # calculate the accuracy of the model by comparing the predicted values with the actual values
     accuracy = sklearn.metrics.accuracy_score(y_test, y_pred)
@@ -105,23 +107,32 @@ def randomForest():
 
     # run an unknow set through the model
     # Read the unknown dataset
-    unknown_data = pd.read_csv('Unknown data.csv')
+    unknown_data = pd.read_csv('Production dataset\\Unknown data.csv')
 
     # Preprocess the unknown dataset same as before
     # convert categorical data to numerical data again
     for category in categoriesToConvert:
         unknown_data[category] = convertCategoricaltoNumerical(category)
     print(unknown_data.head())
-    # Drop the same columns as the training dataset (except for qualified, which dosnt exist in the unknown dataset. This is why there is a [1:] in the features_to_drop list)])
-    unknown_data = unknown_data.drop(columns=features_to_drop[1:], axis=1)
+
     #drop missing values
     unknown_data = unknown_data.dropna()
 
+    # Drop the same columns as the training dataset (except for qualified, which dosnt exist in the unknown dataset. This is why there is a [1:] in the features_to_drop list)])
+    unknown_data_input = unknown_data.drop(
+        columns=features_to_drop[1:], axis=1)
+
     # Make predictions on the unknown dataset
-    unknown_predictions = clf.predict(unknown_data)
+    unknown_predictions = clf.predict(unknown_data_input)
 
     # Add the predicted values to the unknown dataset as a new column
-    unknown_data['QUALIFIED'] = unknown_predictions
+    unknown_data['Predict Qualified'] = unknown_predictions
 
     # Save the unknown dataset with predictions to a CSV file
-    unknown_data.to_csv('unknown_dataset_with_predictions_RF.csv', index=False)
+    unknown_data.drop(columns=[
+        'BATHRM', 'HF_BATHRM', 'HEAT', 'HEAT_D', 'AC', 'NUM_UNITS', 'ROOMS', 'BEDRM', 'AYB', 'YR_RMDL', 'EYB',
+        'STORIES', 'SALEDATE', 'PRICE', 'SALE_NUM', 'GBA', 'BLDG_NUM', 'STYLE', 'STYLE_D', 'STRUCT', 'STRUCT_D',
+        'GRADE', 'GRADE_D', 'CNDTN', 'CNDTN_D', 'EXTWALL', 'EXTWALL_D', 'ROOF', 'ROOF_D', 'INTWALL', 'INTWALL_D',
+        'KITCHENS', 'FIREPLACES', 'USECODE', 'LANDAREA', 'GIS_LAST_MOD_DTTM'
+    ]).to_csv(
+        'Unknow Predictions\\unknown_dataset_with_predictions_RF.csv', index=False)
