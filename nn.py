@@ -2,12 +2,11 @@ from sklearn.model_selection import train_test_split
 import pandas as pd
 import math
 import sklearn as sklearn
-import matplotlib as plt
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.impute import SimpleImputer
 
-def knn():
+def Neural_Network():
     # Read CSV file
     full_dataset = pd.read_csv('Training Dataset\\Training Data.csv')
 
@@ -26,11 +25,16 @@ def knn():
     #if column has more than 50% missing values, drop the column
     full_dataset = full_dataset.dropna(thresh=0.5*len(full_dataset), axis=1)
 
+    # convert the SALEDATE to just the year
+    for index, row in full_dataset.iterrows():
+        full_dataset.at[index, 'SALEDATE'] = row['SALEDATE'][:4]
+
     # drop the target from the training set
-    features_to_drop = ['QUALIFIED', 'row ID', 'CNDTN_D', 'AC', 'STYLE_D', 'SALEDATE',
-                        'EXTWALL_D', 'ROOF_D', 'INTWALL_D', 'GIS_LAST_MOD_DTTM']
+    features_to_drop = ['QUALIFIED', 'row ID', 'HEAT', 'HEAT_D', 'FIREPLACES', 'INTWALL', 'HF_BATHRM', 'GRADE_D', 'STRUCT', 'STRUCT_D', 'STORIES',
+                        'USECODE', 'STYLE', 'KITCHENS', 'NUM_UNITS', 'BLDG_NUM', 'CNDTN_D', 'AC', 'STYLE_D', 'GIS_LAST_MOD_DTTM', 'EXTWALL_D', 'ROOF_D', 'INTWALL_D', 'EXTWALL']
     X = full_dataset.drop(columns=features_to_drop, axis=1)
     y = full_dataset['QUALIFIED']
+
 
     # imputer to handle missing values as per this article https://machinelearningmastery.com/handle-missing-data-python/
     imputer = SimpleImputer(strategy='mean')
@@ -42,7 +46,7 @@ def knn():
         X_imputed, y, test_size=0.3)
 
     # Train the KNN classifier
-    clf = KNeighborsClassifier()
+    clf = MLPClassifier(hidden_layer_sizes=(100, 100))
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
     
@@ -56,7 +60,7 @@ def knn():
     X_test['QUALIFIED'] = y_test
     X_test['PREDICTION'] = y_pred
     X_test.to_csv(
-        'Training Predictions\\prediction_results_knn.csv', index=False)
+        'Training Predictions\\prediction_results_nn.csv', index=False)
 
     # run an unknow set through the model
     # Read the unknown dataset
@@ -67,6 +71,10 @@ def knn():
     for category in categoriesToConvert:
         unknown_data[category] = convertCategoricaltoNumerical(category)
     print(unknown_data.head())
+
+    # convert the SALEDATE to just the year
+    for index, row in unknown_data.iterrows():
+        unknown_data.at[index, 'SALEDATE'] = row['SALEDATE'][:4]
 
     #if column has more than 50% missing values, drop the column
     unknown_data = unknown_data.dropna(thresh=0.5*len(unknown_data), axis=1)
@@ -93,7 +101,7 @@ def knn():
         'GRADE', 'GRADE_D', 'CNDTN', 'CNDTN_D', 'EXTWALL', 'EXTWALL_D', 'ROOF', 'ROOF_D', 'INTWALL', 'INTWALL_D',
         'KITCHENS', 'FIREPLACES', 'USECODE', 'LANDAREA', 'GIS_LAST_MOD_DTTM'
     ]).to_csv(
-        'Unknown Predictions\\unknown_dataset_with_predictions_knn.csv', index=False)
+        'Unknown Predictions\\unknown_dataset_with_predictions_nn.csv', index=False)
     
 
 

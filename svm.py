@@ -3,11 +3,12 @@ import pandas as pd
 import math
 import sklearn as sklearn
 import matplotlib as plt
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 from sklearn.impute import SimpleImputer
 
-def knn():
+
+def Support_Vector_Machine():
     # Read CSV file
     full_dataset = pd.read_csv('Training Dataset\\Training Data.csv')
 
@@ -41,8 +42,9 @@ def knn():
     X_train, X_test, y_train, y_test = train_test_split(
         X_imputed, y, test_size=0.3)
 
-    # Train the KNN classifier
-    clf = KNeighborsClassifier()
+
+    # Train the Support Vector Machine classifier
+    clf = SVC()
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
     
@@ -56,7 +58,7 @@ def knn():
     X_test['QUALIFIED'] = y_test
     X_test['PREDICTION'] = y_pred
     X_test.to_csv(
-        'Training Predictions\\prediction_results_knn.csv', index=False)
+        'Training Predictions\\prediction_results_svm.csv', index=False)
 
     # run an unknow set through the model
     # Read the unknown dataset
@@ -93,7 +95,5 @@ def knn():
         'GRADE', 'GRADE_D', 'CNDTN', 'CNDTN_D', 'EXTWALL', 'EXTWALL_D', 'ROOF', 'ROOF_D', 'INTWALL', 'INTWALL_D',
         'KITCHENS', 'FIREPLACES', 'USECODE', 'LANDAREA', 'GIS_LAST_MOD_DTTM'
     ]).to_csv(
-        'Unknown Predictions\\unknown_dataset_with_predictions_knn.csv', index=False)
+        'Unknown Predictions\\unknown_dataset_with_predictions_svm.csv', index=False)
     
-
-

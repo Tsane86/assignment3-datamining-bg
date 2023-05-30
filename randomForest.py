@@ -45,11 +45,14 @@ def randomForest():
         targets = full_dataset[input_target].unique()
         target2code = dict(zip(targets, range(len(targets))))
         return full_dataset[input_target].replace(target2code)
+    
+
+    #TODO Work out better features, see feature selection workshop
 
     #convert any categorical data to numerical data (from Workshop 7)
     #clean data (missing values, outliers, etc.)
-    #drop rows with missing values
-    full_dataset = full_dataset.dropna()
+    #if column has more than 50% missing values, drop the column
+    full_dataset = full_dataset.dropna(thresh=0.5*len(full_dataset), axis=1)
     #convert categorical data to numerical data
     categoriesToConvert = ['HEAT_D', 'AC', 'STRUCT_D',
                            'GRADE_D', 'CNDTN_D', 'EXTWALL_D', 'ROOF_D', 'INTWALL_D']
@@ -57,12 +60,17 @@ def randomForest():
         full_dataset[category] = convertCategoricaltoNumerical(category)
     print(full_dataset.head())
 
+    # convert the GIS_LAST_MOD_DTTM to just the year - this had no impact haha
+    for index, row in full_dataset.iterrows():
+        full_dataset.at[index, 'GIS_LAST_MOD_DTTM'] = row['GIS_LAST_MOD_DTTM'][:4]
+
     # drop the target from the training set
     features_to_drop = ['QUALIFIED', 'row ID', 'CNDTN_D', 'AC', 'STYLE_D', 'SALEDATE',
-                        'EXTWALL_D', 'ROOF_D', 'INTWALL_D', 'GIS_LAST_MOD_DTTM']
+                        'EXTWALL_D', 'ROOF_D', 'INTWALL_D']
     X = full_dataset.drop(columns=features_to_drop, axis=1)
     y = full_dataset['QUALIFIED']
 
+    # imputer to handle missing values as per this article https://machinelearningmastery.com/handle-missing-data-python/
     imputer = SimpleImputer(strategy='mean')
     X_imputed = pd.DataFrame(imputer.fit_transform(X), columns=X.columns)
 
@@ -95,7 +103,19 @@ def randomForest():
     # We can make predictions using this classifier like this.
     y_pred = clf.predict(X_test)
 
-    # Making Prediction
+    # get information about the features used in the model, as per this article https://machinelearningmastery.com/calculate-feature-importance-with-python/
+    # get the feature importances
+    importances = clf.feature_importances_
+
+    # make a DataFrame to store feature importance and sort it
+    importance_data = pd.DataFrame(
+        {'Feature': X.columns, 'Importance': importances})
+    importance_data = importance_data.sort_values(by='Importance', ascending=False)
+
+    #output the improtance data to a csv
+    importance_data.to_csv('Training Predictions\\feature_importance.csv', index=False)
+
+    #making Prediction
     clf.score(X_test, y_test)
 
     # Confusion matrix as per Workshop 7
@@ -123,8 +143,13 @@ def randomForest():
         unknown_data[category] = convertCategoricaltoNumerical(category)
     print(unknown_data.head())
 
-    #drop missing values
-    unknown_data = unknown_data.dropna()
+    # convert the GIS_LAST_MOD_DTTM to just the year - this had no impact haha
+    for index, row in unknown_data.iterrows():
+        unknown_data.at[index,
+                        'GIS_LAST_MOD_DTTM'] = row['GIS_LAST_MOD_DTTM'][:4]
+
+    #if column has more than 50% missing values, drop the column
+    unknown_data = unknown_data.dropna(thresh=0.5*len(unknown_data), axis=1)
 
     # Drop the same columns as the training dataset (except for qualified, which dosnt exist in the unknown dataset. This is why there is a [1:] in the features_to_drop list)])
     unknown_data_input = unknown_data.drop(
@@ -143,9 +168,9 @@ def randomForest():
 
     # Save the unknown dataset with predictions to a CSV file
     unknown_data.drop(columns=[
-        'BATHRM', 'HF_BATHRM', 'HEAT', 'HEAT_D', 'AC', 'NUM_UNITS', 'ROOMS', 'BEDRM', 'AYB', 'YR_RMDL', 'EYB',
+        'BATHRM', 'HF_BATHRM', 'HEAT', 'HEAT_D', 'AC', 'NUM_UNITS', 'ROOMS', 'BEDRM', 'AYB', 'EYB',
         'STORIES', 'SALEDATE', 'PRICE', 'SALE_NUM', 'GBA', 'BLDG_NUM', 'STYLE', 'STYLE_D', 'STRUCT', 'STRUCT_D',
         'GRADE', 'GRADE_D', 'CNDTN', 'CNDTN_D', 'EXTWALL', 'EXTWALL_D', 'ROOF', 'ROOF_D', 'INTWALL', 'INTWALL_D',
         'KITCHENS', 'FIREPLACES', 'USECODE', 'LANDAREA', 'GIS_LAST_MOD_DTTM'
     ]).to_csv(
-        'Unknow Predictions\\unknown_dataset_with_predictions_RF.csv', index=False)
+        'Unknown Predictions\\unknown_dataset_with_predictions_RF.csv', index=False)
