@@ -3,6 +3,7 @@ import math
 import sklearn as sklearn
 from sklearn import tree
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.metrics import confusion_matrix
 from sklearn.impute import SimpleImputer
@@ -62,9 +63,13 @@ def DecisionTree():
     X = full_dataset.drop(columns=features_to_drop, axis=1)
     y = full_dataset['QUALIFIED']
 
+    # Standard Scaler function from Workshop 4
+    std_scaler = StandardScaler()
+    X_scaled = std_scaler.fit_transform(X)
+
     # imputer to handle missing values as per this article https://machinelearningmastery.com/handle-missing-data-python/
     imputer = SimpleImputer(strategy='mean')
-    X_imputed = pd.DataFrame(imputer.fit_transform(X), columns=X.columns)
+    X_imputed = pd.DataFrame(imputer.fit_transform(X_scaled), columns=X.columns)
 
     #print length of dataframe
     length = len(X_imputed)
@@ -138,10 +143,14 @@ def DecisionTree():
     unknown_data_input = unknown_data.drop(
         columns=features_to_drop[1:], axis=1)
     
+    # Standard Scaler function from Workshop 4
+    std_scaler = StandardScaler()
+    unknown_scaled = std_scaler.fit_transform(unknown_data_input)
+    
     # imputer to handle missing values as per this article https://machinelearningmastery.com/handle-missing-data-python/
     imputer = SimpleImputer(strategy='mean')
     Unknow_imputed = pd.DataFrame(
-        imputer.fit_transform(unknown_data_input), columns=unknown_data_input.columns)
+        imputer.fit_transform(unknown_scaled), columns=unknown_data_input.columns)
 
     # Make predictions on the unknown dataset
     unknown_predictions = clf.predict(Unknow_imputed)

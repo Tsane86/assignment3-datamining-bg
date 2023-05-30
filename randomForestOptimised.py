@@ -3,11 +3,11 @@ import pandas as pd
 import math
 import sklearn as sklearn
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.metrics import confusion_matrix
 from sklearn.impute import SimpleImputer
-
 
 def randomForestOptimised():
 
@@ -59,6 +59,8 @@ def randomForestOptimised():
         full_dataset[category] = convertCategoricaltoNumerical(category)
     print(full_dataset.head())
 
+
+
     # convert the SALEDATE to just the year
     for index, row in full_dataset.iterrows():
         full_dataset.at[index,'SALEDATE'] = row['SALEDATE'][:4]
@@ -69,9 +71,14 @@ def randomForestOptimised():
     X = full_dataset.drop(columns=features_to_drop, axis=1)
     y = full_dataset['QUALIFIED']
 
+    # Standard Scaler function from Workshop 4
+    std_scaler = StandardScaler()
+    X_scaled = std_scaler.fit_transform(X)
+
     # imputer to handle missing values as per this article https://machinelearningmastery.com/handle-missing-data-python/
     imputer = SimpleImputer(strategy='mean')
-    X_imputed = pd.DataFrame(imputer.fit_transform(X), columns=X.columns)
+    X_imputed = pd.DataFrame(
+        imputer.fit_transform(X_scaled), columns=X.columns)
 
     #print length of dataframe
     length = len(X_imputed)
@@ -102,7 +109,7 @@ def randomForestOptimised():
     # We can make predictions using this classifier like this.
     y_pred = clf.predict(X_test)
 
-    # get information about the features used in the model, as per this article https://machinelearningmastery.com/calculate-feature-importance-with-python/
+    # get information about the importance of the features used in the model, as per this article https://machinelearningmastery.com/calculate-feature-importance-with-python/
     # get the feature importances
     importances = clf.feature_importances_
 
@@ -112,7 +119,7 @@ def randomForestOptimised():
     importance_data = importance_data.sort_values(by='Importance', ascending=False)
 
     #output the improtance data to a csv
-    importance_data.to_csv('Training Predictions\\feature_importance.csv', index=False)
+    importance_data.to_csv('Training Predictions\\feature_importance_opt.csv', index=False)
 
     #making Prediction
     clf.score(X_test, y_test)
@@ -125,7 +132,7 @@ def randomForestOptimised():
     X_test['QUALIFIED'] = y_test
     X_test['PREDICTION'] = y_pred
     X_test.to_csv(
-        'Training Predictions\\prediction_results_RF.csv', index=False)
+        'Training Predictions\\prediction_results_RF_opt.csv', index=False)
 
     # calculate the accuracy of the model by comparing the predicted values with the actual values
     accuracy = sklearn.metrics.accuracy_score(y_test, y_pred)
@@ -153,10 +160,14 @@ def randomForestOptimised():
     unknown_data_input = unknown_data.drop(
         columns=features_to_drop[1:], axis=1)
 
+    # Standard Scaler function from Workshop 4
+    std_scaler = StandardScaler()
+    unknown_scaled = std_scaler.fit_transform(unknown_data_input)
+
     # imputer to handle missing values as per this article https://machinelearningmastery.com/handle-missing-data-python/
     imputer = SimpleImputer(strategy='mean')
     Unknow_imputed = pd.DataFrame(
-        imputer.fit_transform(unknown_data_input), columns=unknown_data_input.columns)
+        imputer.fit_transform(unknown_scaled), columns=unknown_data_input.columns)
 
     # Make predictions on the unknown dataset
     unknown_predictions = clf.predict(Unknow_imputed)
@@ -171,4 +182,4 @@ def randomForestOptimised():
         'GRADE', 'GRADE_D', 'CNDTN', 'CNDTN_D', 'EXTWALL', 'EXTWALL_D', 'ROOF', 'ROOF_D', 'INTWALL', 'INTWALL_D',
         'KITCHENS', 'FIREPLACES', 'USECODE', 'LANDAREA', 'GIS_LAST_MOD_DTTM'
     ]).to_csv(
-        'Unknown Predictions\\unknown_dataset_with_predictions_RF.csv', index=False)
+        'Unknown Predictions\\unknown_dataset_with_predictions_RF_opt.csv', index=False)
