@@ -1,21 +1,12 @@
 
-import pandas as pd
-import math
-import sklearn as sklearn
-import matplotlib as plt
-from sklearn import tree
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import ConfusionMatrixDisplay
-from sklearn.metrics import confusion_matrix
 from decisionTrees import DecisionTree
 from knn import knn
 from randomForest import randomForest
 
-# Use to troubleshoot
-print(sklearn.__version__)
-
 # Menu
 print("Welcome to the Model building app")
+print("Please ensure that your Training Data is in the Training Dataset folder and named Training Data.csv")
+print("Please ensure that your Unknow Data set is in the Production Dataset folder and named Unknown Data.csv")      
 print("Please select an option from the menu below")
 print("1. Decision Tree")
 print("2. Random Forest")

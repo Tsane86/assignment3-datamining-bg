@@ -1,5 +1,3 @@
-from sklearn.metrics import ConfusionMatrixDisplay
-from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
 import pandas as pd
 import math
