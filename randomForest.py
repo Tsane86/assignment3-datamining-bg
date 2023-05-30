@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.metrics import confusion_matrix
+from sklearn.impute import SimpleImputer
 
 
 def randomForest():
@@ -25,7 +26,8 @@ def randomForest():
     print(type(full_dataset))
 
     #print length of dataframe
-    print(len(full_dataset))
+    length = len(full_dataset)
+    print((f'Before dropping, the length is: {length}'))
 
     # Print Data types in a table
     data_types = full_dataset.dtypes.reset_index()
@@ -62,6 +64,13 @@ def randomForest():
     X = full_dataset.drop(columns=features_to_drop, axis=1)
     y = full_dataset['QUALIFIED']
 
+    imputer = SimpleImputer(strategy='mean')
+    X_imputed = pd.DataFrame(imputer.fit_transform(X), columns=X.columns)
+
+    #print length of dataframe
+    length = len(X_imputed)
+    print((f'After dropping, the length is: {length}'))
+
     # These are for testing purposes only
     #print(X.head())
     # output a csv of X
@@ -69,7 +78,7 @@ def randomForest():
     #print(y.head())
 
     #split the dataset into training and testing datasets (from workshop 9)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
+    X_train, X_test, y_train, y_test = train_test_split(X_imputed, y, test_size=0.3)
 
     print('X_train:', X_train.shape)
     print('y_train:', y_train.shape)
@@ -122,11 +131,16 @@ def randomForest():
     unknown_data_input = unknown_data.drop(
         columns=features_to_drop[1:], axis=1)
 
+    # imputer to handle missing values as per this article https://machinelearningmastery.com/handle-missing-data-python/
+    imputer = SimpleImputer(strategy='mean')
+    Unknow_imputed = pd.DataFrame(
+        imputer.fit_transform(unknown_data_input), columns=unknown_data_input.columns)
+
     # Make predictions on the unknown dataset
-    unknown_predictions = clf.predict(unknown_data_input)
+    unknown_predictions = clf.predict(Unknow_imputed)
 
     # Add the predicted values to the unknown dataset as a new column
-    unknown_data['Predict Qualified'] = unknown_predictions
+    unknown_data['Predict-Qualified'] = unknown_predictions
 
     # Save the unknown dataset with predictions to a CSV file
     unknown_data.drop(columns=[

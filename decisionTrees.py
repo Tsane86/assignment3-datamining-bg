@@ -159,7 +159,3 @@ def DecisionTree():
         'KITCHENS', 'FIREPLACES', 'USECODE', 'LANDAREA', 'GIS_LAST_MOD_DTTM'
     ]).to_csv(
         'Unknow Predictions\\unknown_dataset_with_predictions_DT.csv', index=False)
-
-
-#DecisionTreeUnknown('Production dataset\\Unknown data.csv')
-

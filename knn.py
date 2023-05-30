@@ -7,6 +7,7 @@ import sklearn as sklearn
 import matplotlib as plt
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
+from sklearn.impute import SimpleImputer
 
 def knn():
     # Read CSV file
@@ -25,10 +26,8 @@ def knn():
 
     # clean
     #drop rows with missing values
-    #full_dataset = full_dataset.dropna()
+    full_dataset = full_dataset.dropna()
 
-    #replace any missing values with the mean of the column
-    full_dataset = full_dataset.fillna(full_dataset.mean())
 
     # drop the target from the training set
     features_to_drop = ['QUALIFIED', 'row ID', 'CNDTN_D', 'AC', 'STYLE_D', 'SALEDATE',
@@ -73,8 +72,13 @@ def knn():
     unknown_data_input = unknown_data.drop(
         columns=features_to_drop[1:], axis=1)
 
+    # imputer to handle missing values as per this article https://machinelearningmastery.com/handle-missing-data-python/
+    imputer = SimpleImputer(strategy='mean')
+    Unknow_imputed = pd.DataFrame(
+        imputer.fit_transform(unknown_data_input), columns=unknown_data_input.columns)
+
     # Make predictions on the unknown dataset
-    unknown_predictions = clf.predict(unknown_data_input)
+    unknown_predictions = clf.predict(Unknow_imputed)
 
     # Add the predicted values to the unknown dataset as a new column
     unknown_data['Predict-Qualified'] = unknown_predictions
