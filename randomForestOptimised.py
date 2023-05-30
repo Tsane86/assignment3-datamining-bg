@@ -5,6 +5,8 @@ import sklearn as sklearn
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import f1_score
+from sklearn.metrics import recall_score
 from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.metrics import confusion_matrix
 from sklearn.impute import SimpleImputer
@@ -59,8 +61,6 @@ def randomForestOptimised():
         full_dataset[category] = convertCategoricaltoNumerical(category)
     print(full_dataset.head())
 
-
-
     # convert the SALEDATE to just the year
     for index, row in full_dataset.iterrows():
         full_dataset.at[index,'SALEDATE'] = row['SALEDATE'][:4]
@@ -108,6 +108,20 @@ def randomForestOptimised():
 
     # We can make predictions using this classifier like this.
     y_pred = clf.predict(X_test)
+
+    # F1 score. As per this documentation https://scikit-learn.org/stable/modules/generated/sklearn.metrics.f1_score.html
+    f1_weighted = f1_score(y_test, y_pred, average='weighted')
+    f1_micro = f1_score(y_test, y_pred, average='micro')
+    f1_macro = f1_score(y_test, y_pred, average='macro')
+
+    # calculate the Recall score
+    recall = recall_score(y_test, y_pred)
+    print(f'The Recall score is {recall}')
+
+    #print f1 scores
+    print("F1 Weighted score: {:.4f}".format(f1_weighted))
+    print("F1 Micro score: {:.4f}".format(f1_micro))
+    print("F1 Macro score: {:.4f}".format(f1_macro))
 
     # get information about the importance of the features used in the model, as per this article https://machinelearningmastery.com/calculate-feature-importance-with-python/
     # get the feature importances

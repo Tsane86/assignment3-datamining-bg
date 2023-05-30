@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import pandas as pd
 import math
 import sklearn as sklearn
@@ -5,7 +6,10 @@ from sklearn import tree
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import ConfusionMatrixDisplay
+from sklearn.metrics import f1_score
+from sklearn.metrics import recall_score
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import roc_curve, auc
 from sklearn.impute import SimpleImputer
 
 
@@ -85,15 +89,25 @@ def DecisionTree():
     X_train, X_test, y_train, y_test = train_test_split(
         X_imputed, y, test_size=0.3, random_state=1234)
 
-    # create a decision tree classifier (Workshop 7 material)
-    clf = tree.DecisionTreeClassifier(max_depth=5, max_leaf_nodes=3)
-    clf.fit(X_imputed, y)
-    tree.plot_tree(clf)
-
     # do DT with the training set
     clf = tree.DecisionTreeClassifier(max_depth=5)
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
+
+    # calculate the Recall score
+    recall = recall_score(y_test, y_pred)
+    print(f'The Recall score is {recall}')
+
+    # Calculate the F1 score. As per this documentation https://scikit-learn.org/stable/modules/generated/sklearn.metrics.f1_score.html
+    f1_weighted = f1_score(y_test, y_pred, average='weighted')
+    f1_micro = f1_score(y_test, y_pred, average='micro')
+    f1_macro = f1_score(y_test, y_pred, average='macro')
+
+    #print f1 scores
+    print("F1 Weighted score: {:.4f}".format(f1_weighted))
+    print("F1 Micro score: {:.4f}".format(f1_micro))
+    print("F1 Macro score: {:.4f}".format(f1_macro))
+
 
     # Making Prediction
     clf.score(X_test, y_test)
@@ -101,6 +115,25 @@ def DecisionTree():
     # Confusion matrix as per Workshop 7
     mat = confusion_matrix(y_test, y_pred)
     print(mat)
+
+    #TODO add plot to all classifiers
+    # Calculate probabilities of positive class
+    y_prob = clf.predict_proba(X_test)[:, 1]
+
+    # Compute FPR, TPR, and thresholds for the ROC curve
+    fpr, tpr, thresholds = roc_curve(y_test, y_prob)
+
+    # Calculate AUC
+    roc_auc = auc(fpr, tpr)
+
+    # Plot the ROC curve as per this article https://www.analyticsvidhya.com/blog/2020/06/auc-roc-curve-machine-learning/
+    plt.plot(fpr, tpr, label='ROC curve (AUC = %0.2f)' % roc_auc)
+    plt.plot([0, 1], [0, 1], 'k--')  # Diagonal line for random classifier
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver Operating Characteristic')
+    plt.legend(loc='lower right')
+    plt.savefig('roc_curve_DT.png')
 
     # output the prediction results to a csv with the original data
     X_test['QUALIFIED'] = y_test
@@ -111,12 +144,16 @@ def DecisionTree():
     accuracy = sklearn.metrics.accuracy_score(y_test, y_pred)
     print(f'The accuracy of the model for the test set is {math.floor(accuracy * 100)}%')
 
-
+    
     # output the confusion matrix as a heatmap
     # Using the methods from https://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html
     #disp = ConfusionMatrixDisplay(confusion_matrix=mat)
     #disp.plot()
     #plt.pyplot.show()
+    # The AUC score needs to be handled differently to get one number out of the three classes.
+    # We're going to average it over the three classes (one vs rest) weighted by the size of each
+    # class. The help gives the other option: ovo.
+    
 
     # run an unknow set through the model
     # Read the unknown dataset

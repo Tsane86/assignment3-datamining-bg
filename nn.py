@@ -3,6 +3,8 @@ import pandas as pd
 import math
 import sklearn as sklearn
 from sklearn.neural_network import MLPClassifier
+from sklearn.metrics import f1_score
+from sklearn.metrics import recall_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score
 from sklearn.impute import SimpleImputer
@@ -54,6 +56,20 @@ def Neural_Network():
     clf = MLPClassifier(hidden_layer_sizes=(100, 100))
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
+
+    # calculate the Recall score
+    recall = recall_score(y_test, y_pred)
+    print(f'The Recall score is {recall}')
+
+    # Calculate the F1 score. As per this documentation https://scikit-learn.org/stable/modules/generated/sklearn.metrics.f1_score.html
+    f1_weighted = f1_score(y_test, y_pred, average='weighted')
+    f1_micro = f1_score(y_test, y_pred, average='micro')
+    f1_macro = f1_score(y_test, y_pred, average='macro')
+
+    #print f1 scores
+    print("F1 Weighted score: {:.4f}".format(f1_weighted))
+    print("F1 Micro score: {:.4f}".format(f1_micro))
+    print("F1 Macro score: {:.4f}".format(f1_macro))
     
     # Calculate and print the accuracy of the training data
     trained_model = clf.predict(X_train)
