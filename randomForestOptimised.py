@@ -47,38 +47,65 @@ def randomForestOptimised():
         targets = full_dataset[input_target].unique()
         target2code = dict(zip(targets, range(len(targets))))
         return full_dataset[input_target].replace(target2code)
-    
 
-    #TODO Work out better features, see feature selection workshop
-
-    #convert any categorical data to numerical data (from Workshop 7)
     #clean data (missing values, outliers, etc.)
     #if column has more than 50% missing values, drop the column
     full_dataset = full_dataset.dropna(thresh=0.5*len(full_dataset), axis=1)
+
+    #convert any categorical data to numerical data (from Workshop 7)
     #convert categorical data to numerical data
-    categoriesToConvert = ['HEAT_D', 'AYB', 'CNDTN_D', 'BEDRM', 'GBA']
+    categoriesToConvert = ['HEAT_D', 'AYB', 'AC', 'CNDTN_D', 'STYLE_D',
+                           'STRUCT_D', 'GRADE_D', 'BEDRM', 'GBA', 'EXTWALL_D', 'ROOF_D', 'INTWALL_D']
     for category in categoriesToConvert:
         full_dataset[category] = convertCategoricaltoNumerical(category)
     print(full_dataset.head())
 
-    # convert the SALEDATE to just the year
-    for index, row in full_dataset.iterrows():
-        full_dataset.at[index,'SALEDATE'] = row['SALEDATE'][:4]
+    #TODO Work out better features, see feature selection workshop
 
-    # drop the target from the training set
-    features_to_drop = ['QUALIFIED', 'row ID', 'HEAT', 'HEAT_D', 'FIREPLACES', 'INTWALL','HF_BATHRM','GRADE_D', 'STRUCT', 'STRUCT_D', 'STORIES', 
-                        'USECODE', 'STYLE', 'KITCHENS', 'NUM_UNITS', 'BLDG_NUM', 'CNDTN_D', 'AC', 'STYLE_D', 'GIS_LAST_MOD_DTTM', 'EXTWALL_D', 'ROOF_D', 'INTWALL_D', 'EXTWALL']
-    X = full_dataset.drop(columns=features_to_drop, axis=1)
+    print('Feature Selection Wizard')
+
+    print('Please enter the column name you wish to use as the Target')
+    print('For example: QUALIFIED')
+    target = input('Enter the target you wish to use: ')
+    data_set_without_target = full_dataset.drop(target, axis=1)
+    data_set_without_target = data_set_without_target.drop('row ID', axis=1)
+
+    print('Please choose the desired features for the model')
+    print('Column names are: ')
+    #print the column names and seperate with a comma
+    for col in data_set_without_target.columns:
+        print(col, end=', ')
+
+    #print on new line
+    print('\n')
+
+    print('Please enter the column names you wish to drop as Features, separated by a comma')
+    print('For example: HEAT_D, AYB, CNDTN_D, BEDRM, GBA, SALEDATE')
+
+    features_to_drop = input('Enter the features you wish to drop: ')
+    print('You have chosen the following features to drop: ', features_to_drop)
+    features_to_drop = features_to_drop.split(', ')
+
+    # convert the SALEDATE to just the year
+    for index, row in data_set_without_target.iterrows():
+        data_set_without_target.at[index, 'SALEDATE'] = row['SALEDATE'][:4]
+
+    #drop row
+    print('Dropping the following features: ', features_to_drop)
+
+    # drop the columns from the training set
+    X = data_set_without_target.drop(columns=features_to_drop, axis=1)
     y = full_dataset['QUALIFIED']
 
-    # Standard Scaler function from Workshop 4
-    std_scaler = StandardScaler()
-    X_scaled = std_scaler.fit_transform(X)
+    #print the remaining data columns
+    print('The remaining data columns are: ')
+    for col in X.columns:
+        print(col, end=', ')
 
     # imputer to handle missing values as per this article https://machinelearningmastery.com/handle-missing-data-python/
     imputer = SimpleImputer(strategy='mean')
     X_imputed = pd.DataFrame(
-        imputer.fit_transform(X_scaled), columns=X.columns)
+        imputer.fit_transform(X), columns=X.columns)
 
     #print length of dataframe
     length = len(X_imputed)
@@ -170,18 +197,15 @@ def randomForestOptimised():
     #if column has more than 50% missing values, drop the column
     unknown_data = unknown_data.dropna(thresh=0.5*len(unknown_data), axis=1)
 
-    # Drop the same columns as the training dataset (except for qualified, which dosnt exist in the unknown dataset. This is why there is a [1:] in the features_to_drop list)])
+    # Drop the same columns as the training dataset (except for qualified, which dosnt exist in the unknown dataset)
     unknown_data_input = unknown_data.drop(
-        columns=features_to_drop[1:], axis=1)
-
-    # Standard Scaler function from Workshop 4
-    std_scaler = StandardScaler()
-    unknown_scaled = std_scaler.fit_transform(unknown_data_input)
+        columns=features_to_drop, axis=1)
+    unknown_data_input = unknown_data_input.drop(columns=['row ID'], axis=1)
 
     # imputer to handle missing values as per this article https://machinelearningmastery.com/handle-missing-data-python/
     imputer = SimpleImputer(strategy='mean')
     Unknow_imputed = pd.DataFrame(
-        imputer.fit_transform(unknown_scaled), columns=unknown_data_input.columns)
+        imputer.fit_transform(unknown_data_input), columns=unknown_data_input.columns)
 
     # Make predictions on the unknown dataset
     unknown_predictions = clf.predict(Unknow_imputed)

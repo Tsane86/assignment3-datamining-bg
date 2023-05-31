@@ -5,6 +5,9 @@ from randomForest import randomForest
 from randomForestOptimised import randomForestOptimised
 from svm import Support_Vector_Machine
 from nn import Neural_Network
+from gradient_booster import gradient_boosting
+from decisionTreeOpt import DecisionTreeOpt
+from knn_opt import knn_opt
 
 # Menu
 print("Welcome to the Model building app")
@@ -17,6 +20,9 @@ print("3. KNN")
 print("4. Support Vector Machine")
 print("5. Neural Network")
 print("6. Random Forest Optimised")
+print("7. Gradient Booster")
+print("8. Decision Tree Optimised")
+print("9. KNN Optimised")
 
 # Get user input
 user_input = input("Please enter your selection: ")
@@ -33,3 +39,9 @@ elif user_input == "5":
     Neural_Network()
 elif user_input == "6":
     randomForestOptimised()
+elif user_input == "7":
+    gradient_boosting()
+elif user_input == "8":
+    DecisionTreeOpt()
+elif user_input == "9":
+    knn_opt()

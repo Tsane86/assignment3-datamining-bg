@@ -150,10 +150,6 @@ def DecisionTree():
     #disp = ConfusionMatrixDisplay(confusion_matrix=mat)
     #disp.plot()
     #plt.pyplot.show()
-    # The AUC score needs to be handled differently to get one number out of the three classes.
-    # We're going to average it over the three classes (one vs rest) weighted by the size of each
-    # class. The help gives the other option: ovo.
-    
 
     # run an unknow set through the model
     # Read the unknown dataset
